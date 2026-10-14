@@ -122,3 +122,71 @@ st.subheader("분석에 사용한 영화 자료")
 
 if st.checkbox("영화 자료 표 보기"):
     st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+# --------------------------------------------------
+# 그래프 2. 장르별 영화 총 관객 트리맵
+# --------------------------------------------------
+st.divider()
+st.header("그래프 2. 장르별 영화 총 관객")
+st.write(
+    "큰 칸일수록 총 관객이 많은 영화입니다. "
+    "장르 안에서 영화별 관객 규모를 비교할 수 있습니다."
+)
+
+# 총 관객 수를 숫자로 변환
+treemap_df = df.copy()
+treemap_df["total_audi"] = pd.to_numeric(
+    treemap_df["total_audi"],
+    errors="coerce"
+).fillna(0)
+
+# 영화명이 같은 경우에도 구분할 수 있도록 영화 코드를 사용
+treemap_df["영화 표시명"] = (
+    treemap_df["movieNm"].fillna("영화명 미상").astype(str)
+    + " ("
+    + treemap_df["movieCd"].fillna("").astype(str)
+    + ")"
+)
+
+# 트리맵 생성: 장르 안에 영화 배치, 칸 크기는 총 관객
+fig2 = px.treemap(
+    treemap_df,
+    path=["genre", "영화 표시명"],
+    values="total_audi",
+    custom_data=["movieNm", "total_audi"],
+    title="장르별 영화 총 관객 분포"
+)
+
+fig2.update_traces(
+    hovertemplate=(
+        "영화명: %{customdata[0]}<br>"
+        "총 관객: %{customdata[1]:,.0f}명"
+        "<extra></extra>"
+    )
+)
+
+fig2.update_layout(
+    height=700,
+    margin=dict(t=60, l=10, r=10, b=10)
+)
+
+st.plotly_chart(
+    fig2,
+    use_container_width=True
+)
+
+# 그래프 해석 구역
+with st.container(border=True):
+    st.subheader("이 그래프로 알 수 있는 것")
+    st.text_area(
+        "분석 내용",
+        placeholder=(
+            "장르별로 총 관객이 많은 영화와 적은 영화를 비교해 "
+            "알 수 있는 점을 한 문장으로 적어 보세요."
+        ),
+        height=90,
+        key="treemap_interpretation",
+        label_visibility="collapsed"
+    )
+
